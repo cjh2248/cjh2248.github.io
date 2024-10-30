@@ -6,6 +6,31 @@ output:
     toc_float: true
 ---
 
-# This page contains my resume. 
+This is an abridged version of my resume for the sake of the assignment.
 
-I am in p8105. 
+
+## Education
+Columbia University, Mailman School of Public Health, New York, NY
+Master of Public Health in Sociomedical Sciences 
+
+Certificate in Infectious Diseases Epidemiology 
+
+Graduation Year: May 2025
+
+University of California, San Diego San Diego, CA
+Bachelor of Arts in Global Health Graduated: June 2023
+
+## Current Experience 
+
+Columbia University, School of Nursing 
+Research Assistant for Dr. Rebecca Schnall January 2024- Present
+
+● Contributed to the Limited Interaction Targeted Epidemiology (LITE-2) study, a federally funded project
+focused on HIV prevention and management.
+
+● Administered surveys and consent forms to eligible research participants via REDCap.
+
+● Assembled HIV testing kits, mailed packages, and scheduled follow-up reminders about upcoming visits.
+
+● Verified HIV test results as positive/negative and provided information about how to redeem
+compensation.

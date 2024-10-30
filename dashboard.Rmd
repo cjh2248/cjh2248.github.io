@@ -21,7 +21,7 @@ data("nyc_airbnb")
 nyc_airbnb = 
   nyc_airbnb |> 
   select(
-    neighbourhood_group, neighbourhood, price, room_type, lat, long) |>
+    neighbourhood_group, neighbourhood, rating, price, room_type, lat, long) |>
   filter(
     !is.na(rating), 
     neighbourhood_group == "Manhattan",

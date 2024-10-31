@@ -1,5 +1,5 @@
 ---
-title: "Plotly examples"
+title: "Plotly Types"
 output: 
   html_document:
     toc: true
@@ -14,26 +14,55 @@ We're gonna look at the NYC Airbnb data.
 library(tidyverse)
 library(p8105.datasets)
 library(plotly)
+library(httr)
+library(jsonlite)
 ```
 
+## Extracting NYC restaurant data
 ```{r}
-data("nyc_airbnb")
+get_all_inspections = function(url) {
+  
+  all_inspections = vector("list", length = 0)
+  
+  loop_index = 1
+  chunk_size = 50000
+  DO_NEXT = TRUE
+  
+  while (DO_NEXT) {
+    message("Getting data, page ", loop_index)
+    
+    all_inspections[[loop_index]] = 
+      GET(url,
+          query = list(`$order` = "zipcode",
+                       `$limit` = chunk_size,
+                       `$offset` = as.integer((loop_index - 1) * chunk_size)
+                       )
+          ) %>%
+      content("text") %>%
+      fromJSON() %>%
+      as_tibble()
+    
+    DO_NEXT = dim(all_inspections[[loop_index]])[1] == chunk_size
+    loop_index = loop_index + 1
+  }
+  
+  all_inspections
+  
+}
 
-nyc_airbnb = 
-  nyc_airbnb |> 
-  select(
-    neighbourhood_group, neighbourhood, rating, price, room_type, lat, long) |>
-  filter(
-    !is.na(rating), 
-    neighbourhood_group == "Manhattan",
-    room_type == "Entire home/apt",
-    price %in% 100:500)
+url = "https://data.cityofnewyork.us/resource/43nn-pn8j.json"
+
+nyc_inspections = 
+  get_all_inspections(url) %>%
+  bind_rows() 
 ```
 
-# Plotly plots 
+# Plots 
 
-## Scatterplot 
+## Boxplot (kinda fail lol)
 ```{r}
+nyc_inspections |>
+  mutate(text_label = str_c("Price: $", price, "\nRating: ", rating))
 nyc_airbnb |>
   mutate(text_label = str_c("Price: $", price, "\nRating: ", rating)) |> 
   plot_ly(
@@ -41,11 +70,31 @@ nyc_airbnb |>
     color = ~price, text = ~text_label, alpha = 0.5)
 ```
 
-## boxplots 
+## Bar Graph
 ```{r}
-nyc_airbnb |> 
-  mutate(neighbourhood = fct_reorder(neighbourhood, price)) |> 
-  plot_ly(y = ~price, color = ~neighbourhood, type = "box", colors = "viridis")
+nyc_inspections <- nyc_inspections %>%
+  filter(!is.na(boro), !is.na(cuisine_description)) %>%  
+  mutate(boro = str_to_title(boro),                    
+         cuisine_description = str_to_title(cuisine_description))
+
+nyc_inspections %>%
+  group_by(boro, cuisine_description) %>%
+  summarise(count = n()) %>%
+  arrange(boro, desc(count)) %>%
+  group_by(boro) %>%
+  slice_head(n = 10) %>%
+  ungroup() %>%
+  mutate(cuisine_description = fct_reorder(cuisine_description, count)) %>% # Order by frequency
+  ggplot(aes(x = cuisine_description, y = count, fill = boro)) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  facet_wrap(~ boro, scales = "free_y") +
+  labs(title = "Top 10 Cuisines by Borough in NYC Restaurant Inspections",
+       x = "Cuisine", 
+       y = "Restaurants", 
+       fill = "Borough") +
+  theme_minimal() + 
+  theme(legend.position = "bottom") 
 ```
 
 ## bar plot 

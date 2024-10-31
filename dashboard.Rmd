@@ -4,29 +4,11 @@ output:
   flexdashboard::flex_dashboard:
     orientation: columns
     vertical_layout: fill
-    source: embed
+    source: embed 
 ---
 
 ```{r setup, include=FALSE}
 library(flexdashboard)
-
-library(tidyverse)
-library(p8105.datasets)
-library(plotly)
-```
-
-```{r}
-data("nyc_airbnb")
-
-nyc_airbnb = 
-  nyc_airbnb |> 
-  select(
-    neighbourhood_group, neighbourhood, rating, price, room_type, lat, long) |>
-  filter(
-    !is.na(rating), 
-    neighbourhood_group == "Manhattan",
-    room_type == "Entire home/apt",
-    price %in% 100:500)
 ```
 
 Column {data-width=650}

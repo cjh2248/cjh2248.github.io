@@ -17,7 +17,24 @@ Column {data-width=650}
 ### Chart A
 
 ```{r}
-
+nyc_inspections %>%
+  group_by(boro, cuisine_description) %>%
+  summarise(count = n()) %>%
+  arrange(boro, desc(count)) %>%
+  group_by(boro) %>%
+  slice_head(n = 10) %>%
+  ungroup() %>%
+  mutate(cuisine_description = fct_reorder(cuisine_description, count)) %>% # Order by frequency
+  ggplot(aes(x = cuisine_description, y = count, fill = boro)) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  facet_wrap(~ boro, scales = "free_y") +
+  labs(title = "Top 10 Cuisines by Borough in NYC Restaurant Inspections",
+       x = "Cuisine", 
+       y = "Restaurants", 
+       fill = "Borough") +
+  theme_minimal() + 
+  theme(legend.position = "bottom") 
 ```
 
 Column {data-width=350}

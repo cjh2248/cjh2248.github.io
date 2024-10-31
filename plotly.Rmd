@@ -16,6 +16,7 @@ library(p8105.datasets)
 library(plotly)
 library(httr)
 library(jsonlite)
+library(dplyr)
 ```
 
 ## Extracting NYC restaurant data
@@ -77,24 +78,21 @@ nyc_inspections <- nyc_inspections %>%
   mutate(boro = str_to_title(boro),                    
          cuisine_description = str_to_title(cuisine_description))
 
-nyc_inspections %>%
-  group_by(boro, cuisine_description) %>%
-  summarise(count = n()) %>%
-  arrange(boro, desc(count)) %>%
-  group_by(boro) %>%
-  slice_head(n = 10) %>%
-  ungroup() %>%
-  mutate(cuisine_description = fct_reorder(cuisine_description, count)) %>% # Order by frequency
-  ggplot(aes(x = cuisine_description, y = count, fill = boro)) +
-  geom_col(position = "dodge") +
-  coord_flip() +
-  facet_wrap(~ boro, scales = "free_y") +
-  labs(title = "Top 10 Cuisines by Borough in NYC Restaurant Inspections",
-       x = "Cuisine", 
-       y = "Restaurants", 
-       fill = "Borough") +
-  theme_minimal() + 
-  theme(legend.position = "bottom") 
+plot_ly(data = rest_inspec %>%
+           group_by(boro, cuisine_description) %>%
+           summarise(count = n()) %>%
+           arrange(boro, desc(count)) %>%
+           group_by(boro) %>%
+           slice_head(n = 10) %>%
+           ungroup() %>%
+           mutate(cuisine_description = fct_reorder(cuisine_description, count)),
+         x = ~cuisine_description, y = ~count, color = ~boro, 
+         type = "bar", colors = "viridis") %>%
+  layout(title = "Top 10 Cuisine Types by Borough in NYC Restaurant Inspections",
+         xaxis = list(title = "Cuisine Type"), 
+         yaxis = list(title = "Number of Restaurants"),
+         barmode = "group", 
+         showlegend = TRUE)
 ```
 
 ## bar plot 

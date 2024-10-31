@@ -23,7 +23,3 @@ Here's a picture of the best boy at the Halloween dog parade last weekend.
 
 <img src= "images/bestboy.jpeg" style= "width:75%">
 
-## Navigation to my Resume
-
-[Resume](about.html)
-

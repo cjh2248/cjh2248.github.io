@@ -11,7 +11,7 @@
 
 
 
-<title>Plotly examples</title>
+<title>Plotly Types</title>
 
 <script src="site_libs/header-attrs-2.28/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
@@ -35,6 +35,14 @@
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
 <link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet" />
+<script src="site_libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+<script src="site_libs/plotly-binding-4.10.4/plotly.js"></script>
+<script src="site_libs/typedarray-0.1/typedarray.min.js"></script>
+<link href="site_libs/crosstalk-1.2.1/css/crosstalk.min.css" rel="stylesheet" />
+<script src="site_libs/crosstalk-1.2.1/js/crosstalk.min.js"></script>
+<link href="site_libs/plotly-htmlwidgets-css-2.11.1/plotly-htmlwidgets.css" rel="stylesheet" />
+<script src="site_libs/plotly-main-2.11.1/plotly-latest.min.js"></script>
 <link href="site_libs/font-awesome-6.4.2/css/all.min.css" rel="stylesheet" />
 <link href="site_libs/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet" />
 
@@ -324,7 +332,7 @@ div.tocify {
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="about.html">About</a>
+  <a href="resume.html">Resume</a>
 </li>
 <li>
   <a href="plotly.html">Plotly</a>
@@ -350,13 +358,107 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Plotly examples</h1>
+<h1 class="title toc-ignore">Plotly Types</h1>
 
 </div>
 
 
-<div id="examples-of-plotly." class="section level1">
-<h1>Examples of plotly.</h1>
+<div id="plotly-plots." class="section level1">
+<h1>Plotly Plots.</h1>
+<p>We’re gonna look at the NYC Airbnb data.</p>
+<pre class="r"><code>library(tidyverse)
+library(p8105.datasets)
+library(plotly)
+library(httr)
+library(jsonlite)
+library(dplyr)</code></pre>
+<div id="extracting-nyc-restaurant-data" class="section level2">
+<h2>Extracting NYC restaurant data</h2>
+<pre class="r"><code>get_all_inspections = function(url) {
+  
+  all_inspections = vector(&quot;list&quot;, length = 0)
+  
+  loop_index = 1
+  chunk_size = 50000
+  DO_NEXT = TRUE
+  
+  while (DO_NEXT) {
+    message(&quot;Getting data, page &quot;, loop_index)
+    
+    all_inspections[[loop_index]] = 
+      GET(url,
+          query = list(`$order` = &quot;zipcode&quot;,
+                       `$limit` = chunk_size,
+                       `$offset` = as.integer((loop_index - 1) * chunk_size)
+                       )
+          ) %&gt;%
+      content(&quot;text&quot;) %&gt;%
+      fromJSON() %&gt;%
+      as_tibble()
+    
+    DO_NEXT = dim(all_inspections[[loop_index]])[1] == chunk_size
+    loop_index = loop_index + 1
+  }
+  
+  all_inspections
+  
+}
+
+url = &quot;https://data.cityofnewyork.us/resource/43nn-pn8j.json&quot;
+
+nyc_inspections = 
+  get_all_inspections(url) %&gt;%
+  bind_rows() </code></pre>
+<pre><code>## Getting data, page 1</code></pre>
+<pre><code>## Getting data, page 2</code></pre>
+<pre><code>## Getting data, page 3</code></pre>
+<pre><code>## Getting data, page 4</code></pre>
+<pre><code>## Getting data, page 5</code></pre>
+<pre><code>## Getting data, page 6</code></pre>
+<pre class="r"><code>nyc_inspections &lt;- nyc_inspections %&gt;%
+  filter(!is.na(boro) &amp; !is.na(cuisine_description)) %&gt;% 
+  mutate(
+    boro = str_to_title(boro),
+    cuisine_description = str_to_title(cuisine_description)
+  )
+
+top_5_cuisines &lt;- rest_inspec %&gt;%
+  group_by(cuisine_description) %&gt;%
+  summarise(count = n()) %&gt;%
+  arrange(desc(count)) %&gt;%
+  slice_head(n = 5) %&gt;%
+  pull(cuisine_description)
+
+rest_inspec_top5 &lt;- rest_inspec %&gt;%
+  filter(cuisine_description %in% top_5_cuisines) </code></pre>
+</div>
+</div>
+<div id="plots" class="section level1">
+<h1>Plots</h1>
+<div id="bar-graph" class="section level2">
+<h2>Bar Graph</h2>
+<pre class="r"><code>plot_ly(
+  data = rest_inspec_top5 %&gt;%
+    group_by(boro, cuisine_description) %&gt;%
+    summarise(count = n()),
+  x = ~boro,
+  y = ~count,
+  color = ~cuisine_description,
+  type = &quot;bar&quot;,
+  colors = &quot;viridis&quot; 
+) %&gt;%
+  layout(
+    title = &quot;Distribution of Top 5 Cuisines by Borough&quot;,
+    xaxis = list(title = &quot;Borough&quot;),
+    yaxis = list(title = &quot;Number of Restaurants&quot;),
+    barmode = &quot;group&quot;,
+    legend = list(title = list(text = &quot;Cuisine Description&quot;)) 
+  )</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;boro&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<div class="plotly html-widget html-fill-item" id="htmlwidget-03d2cb5a527bd809ad18" style="width:672px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-03d2cb5a527bd809ad18">{"x":{"visdat":{"245275a6c04f":["function () ","plotlyVisDat"]},"cur_data":"245275a6c04f","attrs":{"245275a6c04f":{"x":{},"y":{},"color":{},"colors":"viridis","alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"type":"bar"}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"title":"Distribution of Top 5 Cuisines by Borough","xaxis":{"domain":[0,1],"automargin":true,"title":"Borough","type":"category","categoryorder":"array","categoryarray":["BRONX","BROOKLYN","MANHATTAN","QUEENS","STATEN ISLAND"]},"yaxis":{"domain":[0,1],"automargin":true,"title":"Number of Restaurants"},"barmode":"group","legend":{"title":{"text":"Cuisine Description"}},"hovermode":"closest","showlegend":true},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"x":["BRONX","BROOKLYN","MANHATTAN","QUEENS","STATEN ISLAND"],"y":[5720,19594,46462,14985,3268],"type":"bar","name":"American","marker":{"color":"rgba(68,1,84,1)","line":{"color":"rgba(68,1,84,1)"}},"textfont":{"color":"rgba(68,1,84,1)"},"error_y":{"color":"rgba(68,1,84,1)"},"error_x":{"color":"rgba(68,1,84,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":["BRONX","BROOKLYN","MANHATTAN","QUEENS","STATEN ISLAND"],"y":[4256,13097,10893,12714,1196],"type":"bar","name":"Chinese","marker":{"color":"rgba(59,82,139,1)","line":{"color":"rgba(59,82,139,1)"}},"textfont":{"color":"rgba(59,82,139,1)"},"error_y":{"color":"rgba(59,82,139,1)"},"error_x":{"color":"rgba(59,82,139,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":["BRONX","BROOKLYN","MANHATTAN","QUEENS","STATEN ISLAND"],"y":[929,2938,10274,2165,1331],"type":"bar","name":"Italian","marker":{"color":"rgba(33,144,141,1)","line":{"color":"rgba(33,144,141,1)"}},"textfont":{"color":"rgba(33,144,141,1)"},"error_y":{"color":"rgba(33,144,141,1)"},"error_x":{"color":"rgba(33,144,141,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":["BRONX","BROOKLYN","MANHATTAN","QUEENS","STATEN ISLAND"],"y":[3803,3615,4177,7035,206],"type":"bar","name":"Latin (Cuban, Dominican, Puerto Rican, South & Central American)","marker":{"color":"rgba(93,200,99,1)","line":{"color":"rgba(93,200,99,1)"}},"textfont":{"color":"rgba(93,200,99,1)"},"error_y":{"color":"rgba(93,200,99,1)"},"error_x":{"color":"rgba(93,200,99,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":["BRONX","BROOKLYN","MANHATTAN","QUEENS","STATEN ISLAND"],"y":[2877,4844,5460,4383,874],"type":"bar","name":"Pizza","marker":{"color":"rgba(253,231,37,1)","line":{"color":"rgba(253,231,37,1)"}},"textfont":{"color":"rgba(253,231,37,1)"},"error_y":{"color":"rgba(253,231,37,1)"},"error_x":{"color":"rgba(253,231,37,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
 </div>
 
 

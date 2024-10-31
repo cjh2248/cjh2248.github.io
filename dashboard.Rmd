@@ -8,8 +8,50 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-library(flexdashboard)
+library(tidyverse)
+library(p8105.datasets)
+library(plotly)
+library(httr)
+library(jsonlite)
 library(dplyr)
+```
+
+```{r}
+get_all_inspections = function(url) {
+  
+  all_inspections = vector("list", length = 0)
+  
+  loop_index = 1
+  chunk_size = 50000
+  DO_NEXT = TRUE
+  
+  while (DO_NEXT) {
+    message("Getting data, page ", loop_index)
+    
+    all_inspections[[loop_index]] = 
+      GET(url,
+          query = list(`$order` = "zipcode",
+                       `$limit` = chunk_size,
+                       `$offset` = as.integer((loop_index - 1) * chunk_size)
+                       )
+          ) %>%
+      content("text") %>%
+      fromJSON() %>%
+      as_tibble()
+    
+    DO_NEXT = dim(all_inspections[[loop_index]])[1] == chunk_size
+    loop_index = loop_index + 1
+  }
+  
+  all_inspections
+  
+}
+
+url = "https://data.cityofnewyork.us/resource/43nn-pn8j.json"
+
+nyc_inspections = 
+  get_all_inspections(url) %>%
+  bind_rows() 
 ```
 
 Column {data-width=650}
@@ -17,22 +59,43 @@ Column {data-width=650}
 
 ### Chart A
 
-```{r, echo=TRUE}
-plot_ly(data = rest_inspec %>%
-           group_by(boro, cuisine_description) %>%
-           summarise(count = n()) %>%
-           arrange(boro, desc(count)) %>%
-           group_by(boro) %>%
-           slice_head(n = 10) %>%
-           ungroup() %>%
-           mutate(cuisine_description = fct_reorder(cuisine_description, count)),
-         x = ~cuisine_description, y = ~count, color = ~boro, 
-         type = "bar", colors = "viridis") %>%
-  layout(title = "Top 10 Cuisine Types by Borough in NYC Restaurant Inspections",
-         xaxis = list(title = "Cuisine Type"), 
-         yaxis = list(title = "Number of Restaurants"),
-         barmode = "group", 
-         showlegend = TRUE)
+```{r}
+nyc_inspections <- nyc_inspections %>%
+  filter(!is.na(boro) & !is.na(cuisine_description)) %>% 
+  mutate(
+    boro = str_to_title(boro),
+    cuisine_description = str_to_title(cuisine_description)
+  )
+
+top_5_cuisines <- rest_inspec %>%
+  group_by(cuisine_description) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count)) %>%
+  slice_head(n = 5) %>%
+  pull(cuisine_description)
+
+rest_inspec_top5 <- rest_inspec %>%
+  filter(cuisine_description %in% top_5_cuisines) 
+```
+
+```{r}
+plot_ly(
+  data = rest_inspec_top5 %>%
+    group_by(boro, cuisine_description) %>%
+    summarise(count = n()),
+  x = ~boro,
+  y = ~count,
+  color = ~cuisine_description,
+  type = "bar",
+  colors = "viridis" 
+) %>%
+  layout(
+    title = "Distribution of Top 5 Cuisines by Borough",
+    xaxis = list(title = "Borough"),
+    yaxis = list(title = "Number of Restaurants"),
+    barmode = "group",
+    legend = list(title = list(text = "Cuisine Description")) 
+  )
 ```
 
 Column {data-width=350}

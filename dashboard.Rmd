@@ -104,7 +104,29 @@ Column {data-width=350}
 ### Chart B
 
 ```{r}
+nyc_inspect_boro_scores <- nyc_inspections %>%
+  filter(!is.na(boro), !is.na(score)) %>%
+  mutate(boro = str_to_title(boro))
 
+sample_size = 1000
+
+nyc_inspect_scores_sample <- nyc_inspect_boro_scores %>%
+  sample_n(size = sample_size)
+```
+
+```{r}
+plot_ly(
+  data = nyc_inspect_scores_sample, 
+  x = ~boro,
+  y = ~score,
+  type = "box",
+  colors = "viridis"
+) %>%
+  layout(
+    title = "Distribution of Inspection Scores by Borough (Sample Size = 1000)",
+    xaxis = list(title = "Borough"),
+    yaxis = list(title = "Inspection Score") 
+  )
 ```
 
 ### Chart C

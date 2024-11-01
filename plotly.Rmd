@@ -17,6 +17,7 @@ library(plotly)
 library(httr)
 library(jsonlite)
 library(dplyr)
+library(lubridate)
 ```
 
 ## Extracting NYC restaurant data
@@ -127,4 +128,19 @@ plot_ly(
   )
 
 ```
+
+## Density Graph 
+
+```{r}
+filtered_inspections <- nyc_inspections %>%
+  filter(boro == "Manhattan")
+
+plot_ly(filtered_inspections, x = ~score, type = "histogram", histnorm = "density") %>%
+  layout(
+    title = "Density Plot of NYC Restaurant Inspection Scores in Manhattan",
+    xaxis = list(title = "Inspection Score"),
+    yaxis = list(title = "Density")
+  )
+```
+
 

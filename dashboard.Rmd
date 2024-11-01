@@ -7,7 +7,7 @@ output:
     source: embed 
 ---
 
-```{r setup, include=FALSE}
+```{r setup}
 library(tidyverse)
 library(p8105.datasets)
 library(plotly)
@@ -59,44 +59,26 @@ Column {data-width=650}
 
 ### Chart A
 
-```{r}
-nyc_inspections <- nyc_inspections %>%
-  filter(!is.na(boro) & !is.na(cuisine_description)) %>% 
-  mutate(
-    boro = str_to_title(boro),
-    cuisine_description = str_to_title(cuisine_description)
-  )
-
-top_5_cuisines <- rest_inspec %>%
-  group_by(cuisine_description) %>%
-  summarise(count = n()) %>%
-  arrange(desc(count)) %>%
-  slice_head(n = 5) %>%
-  pull(cuisine_description)
-
-rest_inspec_top5 <- rest_inspec %>%
-  filter(cuisine_description %in% top_5_cuisines) 
+```{r, warning=FALSE, message=FALSE}
+manhattan_scores <- nyc_inspections %>%
+  filter(boro == "Manhattan") 
 ```
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 plot_ly(
-  data = rest_inspec_top5 %>%
-    group_by(boro, cuisine_description) %>%
-    summarise(count = n()),
-  x = ~boro,
-  y = ~count,
-  color = ~cuisine_description,
-  type = "bar",
-  colors = "viridis" 
+  data = manhattan_scores,
+  x = ~score,
+  type = "histogram",
+  histnorm = "probability",
+  opacity = 0.75 
 ) %>%
   layout(
-    title = "Distribution of Top 5 Cuisines by Borough",
-    xaxis = list(title = "Borough"),
-    yaxis = list(title = "Number of Restaurants"),
-    barmode = "group",
-    legend = list(title = list(text = "Cuisine Description")) 
+    title = "Density of Restaurant Inspection Scores in Manhattan",
+    xaxis = list(title = "Inspection Score"),
+    yaxis = list(title = "Density")
   )
 ```
+
 
 Column {data-width=350}
 -----------------------------------------------------------------------
@@ -131,23 +113,43 @@ plot_ly(
 
 ### Chart C
 
-```{r, warning=FALSE, message=FALSE}
-manhattan_scores <- nyc_inspections %>%
-  filter(boro == "Manhattan") 
+```{r}
+nyc_inspections <- nyc_inspections %>%
+  filter(!is.na(boro) & !is.na(cuisine_description)) %>% 
+  mutate(
+    boro = str_to_title(boro),
+    cuisine_description = str_to_title(cuisine_description)
+  )
+
+top_5_cuisines <- rest_inspec %>%
+  group_by(cuisine_description) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count)) %>%
+  slice_head(n = 5) %>%
+  pull(cuisine_description)
+
+rest_inspec_top5 <- rest_inspec %>%
+  filter(cuisine_description %in% top_5_cuisines) 
 ```
 
-```{r, warning=FALSE, message=FALSE}
+```{r}
 plot_ly(
-  data = manhattan_scores,
-  x = ~score,
-  type = "histogram",
-  histnorm = "probability",
-  opacity = 0.75 
+  data = rest_inspec_top5 %>%
+    group_by(boro, cuisine_description) %>%
+    summarise(count = n(), .groups = 'drop'), 
+  x = ~boro,
+  y = ~count,
+  color = ~cuisine_description,
+  type = "bar",
+  colors = "viridis" 
 ) %>%
   layout(
-    title = "Density of Restaurant Inspection Scores in Manhattan",
-    xaxis = list(title = "Inspection Score"),
-    yaxis = list(title = "Density")
+    title = "Distribution of Top 5 Cuisines by Borough",
+    xaxis = list(title = "Borough"),
+    yaxis = list(title = "Number of Restaurants"),
+    barmode = "group",
+    legend = list(title = list(text = "Cuisine Description")) 
   )
 ```
+
 

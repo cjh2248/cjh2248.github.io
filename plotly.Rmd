@@ -129,10 +129,24 @@ plot_ly(
 
 ```
 
-## Scatterplot Graph 
+## Histograph Graph 
 
 ```{r}
+manhattan_scores <- nyc_inspections %>%
+  filter(boro == "Manhattan") 
 
+plot_ly(
+  data = manhattan_scores,
+  x = ~score,
+  type = "histogram",
+  histnorm = "probability",
+  opacity = 0.75 
+) %>%
+  layout(
+    title = "Density of Restaurant Inspection Scores in Manhattan",
+    xaxis = list(title = "Inspection Score"),
+    yaxis = list(title = "Density")
+  )
 ```
 
 

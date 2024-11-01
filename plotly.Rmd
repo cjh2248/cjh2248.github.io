@@ -10,7 +10,7 @@ output:
 
 We're gonna look at the NYC Airbnb data. 
 
-```{r}
+```{r, }
 library(tidyverse)
 library(p8105.datasets)
 library(plotly)
@@ -131,7 +131,7 @@ plot_ly(
 
 ## Histograph Graph 
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 manhattan_scores <- nyc_inspections %>%
   filter(boro == "Manhattan") 
 

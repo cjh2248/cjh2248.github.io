@@ -7,7 +7,7 @@ navbar:
       href: resume.html
     - text: "Plotly"
       href: plotly.html 
-      text: "Dashboard"
+    - text: "Dashboard"
       href: dashboard.html
     - icon: fa-envelope fa-lg
       href: mailto:<cindyho9126@gmail.com>
